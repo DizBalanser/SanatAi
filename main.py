@@ -26,14 +26,22 @@ ahead, suggesting improvements, and taking initiative when appropriate
 """
 
 async def ask_openai(user_prompt: str) -> str:
-    response = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt}
-        ]
-    )
-    return response["choices"][0]["message"]["content"]
+    print(f"[Prompt] {user_prompt}")  # Debug print
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Или "gpt-3.5-turbo" если хочешь дешевле
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt}
+            ],
+            timeout=15  # 
+        )
+        answer = response["choices"][0]["message"]["content"]
+        print(f"[Answer] {answer}")  #  Debug print
+        return answer
+    except Exception as e:
+        print(f"[OpenAI Error] {e}")
+        return "⚠️ Sorry, I had trouble processing your request. Please try again."
 
 @dp.message_handler(content_types=types.ContentTypes.TEXT)
 async def handle_message(message: types.Message):
@@ -50,10 +58,10 @@ async def handle_message(message: types.Message):
             reply = await ask_openai(clean_input)
             await message.reply(reply)
     else:
-        # Private chat
         await message.chat.do("typing")
         reply = await ask_openai(user_input)
         await message.reply(reply)
 
 if __name__ == "__main__":
+    print("[SanatAi] Bot is starting...")
     executor.start_polling(dp, skip_updates=True)
