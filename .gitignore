@@ -1,4 +1,7 @@
 .env
 .venv/
-venv/
 venv
+history.json
+memory.json
+__pycache__
+*.json
