@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from openai import OpenAI
@@ -31,8 +32,12 @@ SCHEMA_EXAMPLE = json.dumps(
     indent=2,
 )
 
-SYSTEM_PROMPT = f"""
-You are an expert productivity assistant. Classify a single Telegram message as a task, idea, or note.
+def _get_system_prompt() -> str:
+    """Generate system prompt with current date context."""
+    today = datetime.now().strftime("%Y-%m-%d")
+    return f"""You are an expert productivity assistant. Classify a single Telegram message as a task, idea, or note.
+
+Today is {today}. Use this date when interpreting relative dates like "tomorrow", "Sunday", "next week".
 
 Rules:
 - TASK = user intends to do something (an action, plan, or deadline). Examples: "I need to buy a present by Sunday", "Call mom tomorrow", "Finish homework this evening".
@@ -44,8 +49,7 @@ Rules:
 {SCHEMA_EXAMPLE}
 - Fill only the object that matches `type`. The other two objects must be null.
 - Use ISO format for deadlines (YYYY-MM-DD) or null when unknown.
-- Always provide a concise title for tasks/ideas; default tags to [] when you have no tags.
-""".strip()
+- Always provide a concise title for tasks/ideas; default tags to [] when you have no tags.""".strip()
 
 
 def classify_message(text: str) -> Dict[str, Any]:
@@ -63,7 +67,7 @@ def classify_message(text: str) -> Dict[str, Any]:
     response = client.responses.create(
         model="gpt-4.1-mini",
         input=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": _get_system_prompt()},
             {"role": "user", "content": clean_text},
         ],
     )
